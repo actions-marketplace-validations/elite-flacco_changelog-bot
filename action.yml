@@ -1,4 +1,4 @@
-name: 'Changelog Bot'
+name: 'Changelog Slack Bot'
 description: 'Automatically generate changelogs from conventional commits and send them to Slack'
 author: 'elite-flacco'
 
