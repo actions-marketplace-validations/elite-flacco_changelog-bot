@@ -1,0 +1,115 @@
+name: 'Changelog Bot'
+description: 'Automatically generate changelogs from conventional commits and send them to Slack'
+author: 'elite-flacco'
+
+branding:
+  icon: 'file-text'
+  color: 'blue'
+
+inputs:
+  repositories:
+    description: 'JSON array of repositories to track. Format: [{"repository":"owner/repo","name":"Display Name"}]'
+    required: true
+
+  slack-webhook-url:
+    description: 'Slack webhook URL for posting changelogs. Can be overridden per-repository in repositories JSON.'
+    required: false
+
+  github-token:
+    description: 'GitHub token for cloning repositories. Pass github.token from your workflow.'
+    required: false
+
+  config-path:
+    description: 'Path to custom config.yaml file (optional)'
+    required: false
+
+  dry-run:
+    description: 'Run without sending to Slack or updating state'
+    required: false
+    default: 'false'
+
+  console-only:
+    description: 'Output to console only, skip Slack'
+    required: false
+    default: 'false'
+
+  verbose:
+    description: 'Enable verbose logging'
+    required: false
+    default: 'false'
+
+  first-run:
+    description: 'Force first-run behavior (look back 30 days)'
+    required: false
+    default: 'false'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      shell: bash
+      run: pip install -r ${{ github.action_path }}/requirements.txt
+
+    - name: Restore state from cache
+      id: cache-restore
+      uses: actions/cache/restore@v4
+      with:
+        path: changelog-state-data
+        key: changelog-state-${{ github.repository }}-${{ github.run_id }}
+        restore-keys: |
+          changelog-state-${{ github.repository }}-
+
+    - name: Restore state files
+      if: steps.cache-restore.outputs.cache-hit == 'true'
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: |
+        if [ -d ../changelog-state-data ]; then
+          mkdir -p data
+          cp -f ../changelog-state-data/*.json data/ 2>/dev/null || true
+        fi
+
+    - name: Generate and send changelog
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      env:
+        REPOSITORIES_JSON: ${{ inputs.repositories }}
+        SLACK_WEBHOOK_URL: ${{ inputs.slack-webhook-url }}
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        CONFIG_PATH: ${{ inputs.config-path }}
+        LOG_LEVEL: ${{ inputs.verbose == 'true' && 'DEBUG' || 'INFO' }}
+      run: |
+        ARGS=""
+        if [ "${{ inputs.dry-run }}" = "true" ]; then
+          ARGS="$ARGS --dry-run"
+        fi
+        if [ "${{ inputs.console-only }}" = "true" ]; then
+          ARGS="$ARGS --console-only"
+        fi
+        if [ "${{ inputs.verbose }}" = "true" ]; then
+          ARGS="$ARGS --verbose"
+        fi
+        if [ "${{ inputs.first-run }}" = "true" ]; then
+          ARGS="$ARGS --first-run"
+        fi
+        python -m src.main $ARGS
+
+    - name: Prepare state files for caching
+      if: always()
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: |
+        mkdir -p ../changelog-state-data
+        cp -f data/state.*.json ../changelog-state-data/ 2>/dev/null || true
+
+    - name: Save state to cache
+      if: always()
+      uses: actions/cache/save@v4
+      with:
+        path: changelog-state-data
+        key: changelog-state-${{ github.repository }}-${{ github.run_id }}

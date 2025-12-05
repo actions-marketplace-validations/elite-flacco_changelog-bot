@@ -1,0 +1,94 @@
+# Changelog Generator Configuration
+#
+# This file contains public styling and formatting preferences.
+# Safe to commit to version control.
+#
+# For private configuration (webhooks, tokens, repos), use .env file.
+# See .env.example for template.
+
+# Conventional commit types configuration
+commit_types:
+  feat:
+    label: "Features"
+    emoji: "✨"
+    include: true
+    order: 1
+
+  fix:
+    label: "Bug Fixes"
+    emoji: "🐛"
+    include: true
+    order: 2
+
+  docs:
+    label: "Documentation"
+    emoji: "📚"
+    include: true
+    order: 3
+
+  style:
+    label: "Style Changes"
+    emoji: "💎"
+    include: true
+    order: 4
+
+  refactor:
+    label: "Refactoring"
+    emoji: "♻️"
+    include: true
+    order: 5
+
+  perf:
+    label: "Performance"
+    emoji: "⚡"
+    include: true
+    order: 6
+
+  test:
+    label: "Tests"
+    emoji: "✅"
+    include: true
+    order: 7
+
+  chore:
+    label: "Chores"
+    emoji: "🔧"
+    include: true
+    order: 8
+
+  ci:
+    label: "CI/CD"
+    emoji: "👷"
+    include: true
+    order: 9
+
+  build:
+    label: "Build"
+    emoji: "📦"
+    include: true
+    order: 10
+
+  revert:
+    label: "Reverts"
+    emoji: "⏪"
+    include: true
+    order: 11
+
+# Slack message formatting
+slack:
+  username: "Changelog Bot"
+  icon_emoji: ":memo:"
+
+# Changelog generation settings
+changelog:
+  include_author: true
+  include_date: true
+  include_commit_hash: true
+  hash_length: 7
+  group_by_type: true
+  max_commits_per_type: 50
+
+# First run behavior
+first_run:
+  lookback_days: 30
+  max_commits: 50

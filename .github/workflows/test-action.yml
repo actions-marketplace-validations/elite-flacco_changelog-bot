@@ -1,0 +1,104 @@
+name: Test Action
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test-dry-run:
+    name: Test Dry Run
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Test action (dry run)
+        uses: ./
+        with:
+          repositories: |
+            [
+              {"repository": "${{ github.repository }}", "name": "Changelog Test"}
+            ]
+          github-token: ${{ github.token }}
+          dry-run: true
+          console-only: true
+          verbose: true
+
+  test-console-only:
+    name: Test Console Output
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Test action (console only)
+        uses: ./
+        with:
+          repositories: |
+            [
+              {"repository": "${{ github.repository }}", "name": "Changelog Test"}
+            ]
+          github-token: ${{ github.token }}
+          console-only: true
+          first-run: true
+
+  test-multiple-repos:
+    name: Test Multiple Repositories
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Test action (multiple repos)
+        uses: ./
+        with:
+          repositories: |
+            [
+              {"repository": "github/gitignore", "name": "GitHub Gitignore"},
+              {"repository": "github/choosealicense.com", "name": "Choose a License"}
+            ]
+          github-token: ${{ github.token }}
+          dry-run: true
+          console-only: true
+
+  test-custom-config:
+    name: Test Custom Config File
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Test action with custom config
+        uses: ./
+        with:
+          repositories: |
+            [
+              {"repository": "${{ github.repository }}", "name": "Custom Config Test"}
+            ]
+          slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          github-token: ${{ github.token }}
+          config-path: .github/config.custom.yaml
+          verbose: true
+
+  test-slack-notification:
+    name: Test Slack Notification
+    runs-on: ubuntu-latest
+    # Only run on manual workflow dispatch and if SLACK_WEBHOOK_URL secret is set
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Test action with Slack
+        uses: ./
+        with:
+          repositories: |
+            [
+              {"repository": "${{ github.repository }}", "name": "Changelog Bot Test"}
+            ]
+          slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          github-token: ${{ github.token }}
+          first-run: true
+          verbose: true
